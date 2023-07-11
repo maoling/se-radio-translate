@@ -1,3 +1,8 @@
+Link: https://www.se-radio.net/2015/11/se-radio-episode-241-kyle-kingsbury-on-consensus-in-distributed-systems/
+
+
+
+
 This is Software Engineering Radio, the podcast for professional developers on the web at
 sce-radio.net.
 SC Radio brings you relevant and detailed discussions of software engineering topics
@@ -567,6 +572,8 @@ I believe Tokutek has published additional analysis of the Mongo replication pro
 I think there are actually still bugs in it, but I haven't gone back and lived personally.
 One of my goals for this next round of Jepsen is to do a second attempt.
 OK.
+
+
 React.
 React lost staggering amounts of data in last right wins mode.
 This is not a new result.
@@ -578,6 +585,8 @@ However, if you use CRDTs and set an addition as a safe operation to do in a CRD
 So it does behave exactly as you'd expect for an AP system.
 You just have to make sure you use siblings.
 OK.
+
+
 So the next one is ZooKeeper.
 That's a different kind of system, right?
 Well, it wouldn't have categorized it as a database, but clearly it is a data store with
@@ -594,6 +603,8 @@ No obvious problems exist, obviously.
 Yeah, it's just that it happened to pass that particular set of tests.
 And I hammered on it for quite a while and wasn't able to find another problem.
 OK.
+
+
 You would be one I haven't heard of before.
 You would be, yeah, that came out of attention because one of the founders wrote some really
 questionable things about the cap theorem.
@@ -607,6 +618,8 @@ So it's unlikely that your clients are willing to tolerate 10 milli-an-lensies o
 They're probably going to give up and fail.
 So it essentially becomes unavailable completely during a position as opposed to having partial
 availability.
+
+
 Kafka.
 Kafka had a really interesting bug.
 I was reading the replication design document for, I think, maybe O8.
@@ -629,6 +642,8 @@ And at that point, you've lost data.
 That new node will take over and overwrite the previous ones.
 So to find those kinds of scenarios, did you have to, you know, think of that once you
 notice there's a single node, happily acknowledging that everything is fine.
+
+
 Did you change the tool to actually look for that case and kill that one node as well?
 Or how did you find it?
 How did you provoke those blocks so you make them happen?
@@ -648,6 +663,8 @@ you can't just partition stuff randomly anymore.
 It's not like a simple person would do it.
 You had to have this sort of one to punch of getting it down to a single node or minority
 nodes and then making sure those loss of connections.
+
+
 So luckily, J.U.P.S.N. has like a place you can hook in arbitrary failure scheduler.
 And I was able to write one that caused that particular pattern.
 And indeed, it did lose tons of data.
@@ -665,12 +682,16 @@ It's still called Kafka database.
 It's a log.
 It's maybe not what you think of as a traditional database, but it still was a data store, for
 sure.
+
+
 What about Cassandra?
 Cassandra had just introduced a new transaction system called Byway Transactions.
 When I was able to show they would deadlock hard, which was a dead to life result.
 And when the deadlock was fixed, it also lost data.
 So that found two super bugs in their transaction system, plus a whole bunch of interesting
 isolation problems and terminology issues in the docs.
+
+
 Okay.
 What about RabbitMQ?
 Now that's not a database that I have to insist.
@@ -687,6 +708,8 @@ But it was still a good example of here's something some people do, you know, tr
 to shape one database into another.
 How can we demonstrate with amount of city properties?
 Hold true.
+
+
 Okay.
 Just pick, well, let's go with the last few as well.
 So we have ad city and console.
@@ -699,6 +722,8 @@ The difficulty is that they're consistent updates and their consistent reads.
 Oh, yeah, sorry, it's consistent reads did not check to make sure that the leader they
 were talking to was still the leader by the end of the read operation.
 And so a cluster transition could occur and you could wind up reading stale data.
+
+
 And a final one on the list is Elasticsearch.
 Elasticsearch was a complete disaster.
 It lost data from network positions that were intersecting from network positions that were
@@ -756,6 +781,8 @@ like.
 Basho places a very high value in papers and it shows in their engineering, while I do
 have data, allows the corruption bugs from time to time, I think their general architecture
 has proven to be solid.
+
+
 That company like MongoDB, they made some obviously terrible choices as far as safety
 goes, but they also made those choices because they knew they had to get this database out
 door quickly to build traction in the market.
@@ -767,6 +794,8 @@ My principle concerns that people document and explain and communicate their unc
 or their possible failure modes to users.
 I don't need people to be 100% safe, I just want them to be honest.
 Right.
+
+
 So that is something that I find very interesting.
 I mean, the different trade offs, sometimes there are even valid trade offs, right?
 As you mentioned, if it's documented and if it's very openly communicated that there
@@ -788,6 +817,8 @@ the data store in their application layer?
 You can make two answers out of that if that was too much of a question to ask.
 I really want to avoid making specific endorsements because not every database is suitable for
 all problem classes, right?
+
+
 Typically, you're going to choose several databases that your particular needs as far
 as availability performance and distribution go.
 And also, just because they didn't find problems doesn't mean there are problems, and you
@@ -801,6 +832,8 @@ has been a tire fire.
 I would not recommend Elasticsearch at all if you care about having your database cluster
 or having your search system actually available and trying to request a data in it.
 However, it doesn't sound like an endorsement.
+
+
 Oh yeah, it's definitely not.
 However, it has a phenomenal API.
 It is probably the most popular of the available tools.
@@ -810,6 +843,8 @@ data.
 Now I've seen it do some interesting things like lose a third to an eighth of the data
 set from a node reboot, and that stage starts to be really problematic for us.
 But in certain cases, that's still okay.
+
+
 And if you're refilling it, it's fine.
 So this is one of the things where I want people to just think really carefully about
 what kind of safety they really need.
@@ -821,6 +856,8 @@ It has a very complicated connection model, and I mess it up all the time.
 But Zucheeper and Console, we can see the are excellent tools for just, you know, for
 the purpose that they're intended for, I would assume they are, right, for the configuration
 use case.
+
+
 It's a different one than the string.
 Yeah, it's like one of those three, right?
 Even though SCD has, I think, a very nice, simple HTTP API, it has only been around for
@@ -832,12 +869,16 @@ behavior that developers haven't seen yet because it's like, oh, it only happens
 you're at this request volume, this cluster size, this sort of latency pattern.
 And then you get this weird explosion of memory and then GCPOS or whatever.
 And Zucheeper, you know, is also seen as things.
+
+
 So maturity is, I think, you know, even though you can be based on a solid theoretical understanding,
 it takes a while to iron out the case.
 So maybe let's talk a bit about how you actually built Japsense.
 So because one of the things that I found interesting was that your choice of closure
 for it, was that just coincidence because you happened to be familiar with that language
 or was it a conscious choice to use it for that purpose?
+
+
 I wrote the first proxy drilling, actually, and it didn't go very well.
 I wound up using a Ruby deployment tool called Soltysid that I wrote to do the network automation,
 like killing nodes and causing network failures.
@@ -863,6 +904,8 @@ subproblem.
 There are quite a few academic network modeling tools, but most of them are aimed at you
 write your algorithm inside their language and it checks the any of it.
 The spin and promo are both algorithm checking languages.
+
+
 You can write something in C or a formal language like TLA+, and it will check the model to
 make sure that it satisfies whatever variance you describe.
 You can run your entire network in a simulated system that does accurate message passing
@@ -873,6 +916,8 @@ I had to have this black box system where I could induce the failures externally
 insert the system externally and hopefully get some useful results out of it.
 Jepsen has a sort of funny shape to account for that problem.
 I'm not sure.
+
+
 Antirez, so it has written his own partition testing tool for Redis.
 There are failure tools for measuring Cassandra that are internal.
 Rheoc has extensive stuff written in QuickCheck, which is a generative testing tool for Erlang
@@ -885,6 +930,8 @@ They can actually have a robot flip a switch on the switch or whatever and turn 
 and see what happens.
 Wow.
 Okay.
+
+
 So can you elaborate a bit on how Jepsen works internally?
 Yeah.
 So Jepsen has gone through a few iterations.
@@ -901,6 +948,8 @@ consistent with the operations we observe from a database.
 And then Jepsen is responsible for building a bunch of random operations like set the
 registers number to two if and only if it's currently three or add the number three to
 the queue, the queue something.
+
+
 And then it has clients which will apply those operations to the system.
 So the combination of the randomly generated operations, the history of how those operations
 played out in the system, what the different clients actually saw that it was due.
@@ -922,6 +971,8 @@ I'd go back to some theory if that's okay with you.
 Sure.
 There has been a whole lot of research into algorithms for resolving this, for finding
 a strategy to resolve the consistency problems that arise.
+
+
 Are there some basic ones that people should know that you would like to point people to?
 The goal standard is Paxos.
 No, if you don't know what you need, choose linear accessibility.
@@ -932,6 +983,8 @@ If that's explainable in a podcast?
 You know, honestly, Paxos is a subtle and dark magic, which I am not qualified to explain
 verbally and do whiteboard.
 Okay.
+
+
 Even then, it's a little dodgy for me.
 The end result is that Paxos gives you a system of participating nodes in a cluster which can
 come to agreements on certain decisions.
@@ -942,6 +995,8 @@ to Paxos.
 There's also Zab, which is the zookeeper atomic broadcast paper.
 And there's Zab as actually implemented inside of zookeeper, which are some of the different
 things.
+
+
 All of those also offer linear accessibility.
 So as a lowly application developer, I don't actually have to implement them because hopefully
 I have some, I use some tool that has implemented those things correctly.
@@ -950,6 +1005,8 @@ Or do I have to know the consequences of using them?
 I mean, I have to have some, you know, some insight into what it is that I'm using there,
 right?
 I do.
+
+
 You don't need to understand how they work.
 All you need to know is what classes of history do they allow?
 In a linearizable system, you're guaranteed once your operation completes, it's going

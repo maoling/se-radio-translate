@@ -1,3 +1,7 @@
+Link: https://www.se-radio.net/2020/07/episode-417-alex-petrov-on-database-storage-engines/
+
+
+
 This is Software Engineering Radio, the podcast for professional developers on the web at se-radio.net.
 SE Radio is brought to you by the IEEE Computer Society, the IEEE Software magazine.
 Online at computer.org slash software.
@@ -9,6 +13,9 @@ When you can make faster decisions, there's no telling what you'll create.
 Ready, set, code.
 Start coding for free. Visit intersystems.com slash try to try IRIS.
 For Software Engineering Radio, this is Adam Gordon-Bell.
+
+
+
 Alex Petrov is a data infrastructure engineer.
 He is a database and storage system enthusiast.
 He is a Cassandra, a core contributor, and the author of Database Internals, a new book for O'Reilly.
@@ -39,6 +46,8 @@ And one, probably most prominent example is Roxy B.
 And there is a project called RockSandra, for example, that is taking Cassandra and trying to make the storage engine of Cassandra pluggable.
 And unfortunately, that's not such an easy task.
 And it is allegedly used in production.
+
+
 I don't have any more details on that, but, well, it's an open source project and it seems like it's active and living.
 But from the perspective of development, it was not, you know, just abstracting away the difficult parts and making it completely 100% pluggable.
 So there are many things that I would say still not 100% compatible between, you know, the traditional Cassandra in air quotes and the rock center.
@@ -49,12 +58,16 @@ Yes, I would say that that's the biggest problem.
 And once again, as I said, the coupling between the database components is probably one of the biggest problems.
 Yeah, we don't get to arbitrarily pick and choose because they don't.
 We can't switch them out.
+
+
 What about the storage engine of like an in-memory database?
 How does that differ?
 So when we're talking about in-memory databases, it's not like you can say that every in-memory database is the same.
 So some in-memory databases store data just in memory.
 So without, there is no access to this at all.
 And some in-memory databases use this for some of the things.
+
+
 So for example, you can use this for logging, like recovery, right?
 So whenever you restart the database, you can bring it at least to the latest state that it's been in before it was restarted.
 Or another example is whenever you're using disk as a secondary storage, meaning that most of the data is living in memory and the rest of the data.
@@ -66,18 +79,26 @@ But ultimately, if you're accessing the disk in the end, I would say that storag
 However, I'm not 100% sure if there is such strict separation of concepts or depending on an implementation, things can be titled or tied together so tightly that it's barely possible to tell those things apart.
 So yeah, it really depends.
 So does that mean that there could be some sort of convergence? Like if I am able to give enough memory to a Cassandra instance and use it as a key value store, does it perform like like Redis or I would say that it's very difficult to make Cassandra perform just like Redis on like if we compare like a single node of Redis and so I'm going to note of Cassandra with a bunch of memory.
+
+
 But I would say that Cassandra has its own features and its own things that it can be better at.
 I guess I'm imagining in my head that I could make an in-memory key value store by just having just like a hash map that I hold on to, right, and put values in and out.
 Whereas like a disk-based storage engine seems much more complex. I mean, that's my understanding. Is it harder to work with a database that's storing things on disk versus one that's in memory?
 I would say it's inherently harder, so much, much harder. So it's funny that you mentioned the hash table because like one of the things it's best for, it's good for, is like random access basically, right?
 Whenever you have a key and you would like to get a value, so that would be the perfect example for the hash map usage.
+
+
 However, if you would like to take not a single key but a range of keys, for instance, you know, give me everybody with the last name that starts with P for instance.
 So it would be very difficult to respond to the same query with the hash map, or at least you would have to have either a linear scan through all the keys and values, or you would have to have some separate index structure that would sort things and prepare them in a way that would allow such a query to be ran.
+
+
 However, if we're talking about the on disk structures, so things get even more complicated. So not only we're, or we're not only constrained by the fact that, well, certain data structures are best for certain things, but we are also constrained by the fact that
 we are implementing the memory management by ourselves, because even if we're using the programming language with unmanaged runtime, whenever we were just using, you know, raw pointers, for instance, and we still get at least something from the system, right?
 We get like virtual memory, we can access, well, we can allocate chunks of memory, we free them, and we don't really see, you know, physical representation of things most of the time, and even if we're talking about things like classes and structures, so we are
 writing to fields and we rarely, you know, address things just bite by bite. And whenever we were talking about a memory, or things that are stored on disk, we have to implement our own memory management, meaning that whenever we address things that are located within the same page on the disk,
 we can, you know, use like local pointers whenever we address the thing that is located in a different page on the disk, we have to use out of page pointers that, and we have to think about how we implement those because, you know, page location can change.
+
+
 So, of course, I'm, you know, just throwing concepts here, but get the idea, right? So, instead of simply allocating and deallocating chunks of memory, you have to, you know, think through an entire structure, basically how to lay it out on the disk, and very little is there to help you because file system, all it gives you is an interface of, you know, seek to a specific point in the file,
 and read a certain number of bytes from that file, and then, well, you can write basically to the same location in the file and that's all you get from it, right? And everything that you implement in the file, like it's header, it's like trailer, and everything in between those is pretty much like your pages, and it's certainly much more difficult than implementing
 and in memory data structure. However, in memory data structures implemented right, and especially when, like, there is lots of concurrency involved, I would say that it's also not such an easy task. It's just different sets of problems, so to say.
