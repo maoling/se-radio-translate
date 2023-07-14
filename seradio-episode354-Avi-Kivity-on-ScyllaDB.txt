@@ -138,6 +138,8 @@ the cluster because suddenly that node is not responding to other nodes and of c
 if your client use case is latency sensitive then you feel the impact immediately.
 You have no response from that node for those hundreds of milliseconds and you cannot continue
 your workload.
+
+
 So one of the tasks which GC also performs is heap compaction.
 Without the presence of a garbage collector how does Silla manage the heap fragmentation?
 That's an excellent question.
@@ -172,6 +174,8 @@ We don't need to traverse the live set like a garbage collector that in order to
 out what is live and then understand that everything else is a garbage.
 You already know what the garbage is.
 It's explicitly free.
+
+
 It's also only user objects that are stored in the log structure allocator.
 Regular objects that are used as part of a request and responses and for general housekeeping
 of the database those are allocated using the regular allocator so they don't participate
@@ -196,6 +200,8 @@ This one feature that causes to use C++14 but by now we have moved to C++17 whic
 a lot of very nice features but none of them were as compelling.
 So we could have continued using C++14 but chose to update in order to enjoy the quality
 of life benefits.
+
+
 So you mentioned about Celas asynchronous model.
 Let's discuss more about it.
 So we hear a lot about Celas share nothing architecture.
@@ -233,6 +239,8 @@ of using shared storage and this is more unique to SillaDB.
 It also uses shared nothing architecture among the cores.
 So each core only accesses its own memory, its own files and usually its own connection
 connections.
+
+
 So this brings the same advantages.
 It reduces the need for locking which is expensive in shared architecture and it allows it to
 use a large number of cores that are available.
@@ -245,8 +253,12 @@ It is very hard to get that right.
 Sure.
 So shared nothing on a node level is extremely important these days.
 I see.
+
+
 So I think you briefly talked about it.
 But what do you think is a disadvantage of having multiple application threads per core?
+
+
 So when you have many application threads then it means that the scheduler, the kernel scheduler
 has to make the decision about which thread gets to run each time.
 And of course that means that you lose control.
@@ -284,6 +296,8 @@ So one question which I was wondering is since Silla is doing everything on a pe
 the database sharding is done on a per core basis and as we will discuss further the network
 stack is also on a per core basis why would intercore communication be necessary in the
 first place?
+
+
 It's a great question and in fact we are trying to reduce the amount of intercore communication.
 The most common place where we have that is the client connections.
 So when the client connects to a node it doesn't know that which sharded is connected to and
@@ -301,6 +315,8 @@ We are working hard to eliminate all of those intercore communications not only 
 performance but they also generate imbalance and imbalance is a pain of thread per core
 implementations.
 We like to see the workload evenly balanced among all the cores and all the nodes.
+
+
 Great.
 So let's talk about the C-Star framework.
 The C-Star framework powers a lot of technology behind a CillaDB.
@@ -316,6 +332,8 @@ Obviously it's co-developed with the Cilla since whenever we need a new low leve
 we see if it's generally useful and not something that is Cilla specific and if that's the case
 then we put it in C-Star so that others can benefit and if it's something that's really
 Cilla specific we keep it in CillaDB.
+
+
 Great.
 So are there any other projects where C-Star framework is being used apart from Cilla?
 Oh there are several such projects.
@@ -329,6 +347,8 @@ order to make that transition easier and those are components that are aimed at 
 mode application where some part of the application is still not ported to ThreadPerCore mode
 and other parts are and they contributed the glue logic that allows it to build such an
 application.
+
+
 Great.
 So, one of the other fundamental changes with CillaDB has done is using the C-Star's
 user space disk IOS Scheduler as against the stock Linux kernel Scheduler.
@@ -356,6 +376,8 @@ amount of IOS that was done for queries and for compaction and for all of the ot
 of IOS that we do we can schedule them in the way that we want instead of leaving it
 to some decision of the device which is not what we want.
 So you talked about maintaining Iocues in user space.
+
+
 How many Iocues does CillaDB maintain in user space?
 So there are two levels of Iocues that the CillaDB maintains.
 The lower level is the one that we have pair shard.
@@ -370,6 +392,8 @@ have 100 Iocues on that machine and those service classes are things like query,
 commit log, mem table flushes and repair.
 So those are all operations which we want to isolate from each other so no one can dominate
 over the rest.
+
+
 Great.
 So the decisions regarding how many queues we are supposed to maintain, is that done automatically
 via an IOTuning tool or is it static for every installation of SolarDB?
@@ -414,6 +438,8 @@ Otherwise it's not possible so in those cases we allocate a core just for networ
 that core has the sole role of performing TCP IP that's not ideal of course but it was
 the best compromise that we could make.
 I see.
+
+
 So since Silla support both user space and the kernel TCP IP stack can you explain for
 the benefit of the listeners where would I want to use one over another in a general
 more general context not limited to Silla but if I am a user of a C star framework and
@@ -437,6 +463,8 @@ using the Linux page cache then you're basically giving control over how the cac
 how things are evicted when it's filled to the kernel and while the kernel is a great
 general purpose system it's not tuned to what we want we can make better decisions because
 we know our workload.
+
+
 So for example when we are doing a compaction we don't need any caching we know that the
 data is much larger than memory so there's no point in caching it and we know that the
 data that we're going to write to disk will not be used in the near future so again there's
@@ -450,6 +478,8 @@ because we've merged multiple sources of information and through our ways the du
 So having an object cache allows us to get better memory utilization and reduce our CPU
 utilization and of course for an object cache you need something specialized you can't
 use the page cache for that.
+
+
 I see.
 So what this practice of because the general theme I'm getting over here is moving some
 functionalities from kernel to user space and similar DB has already done that with the
@@ -483,6 +513,8 @@ cache and also if we know that the partition is new and doesn't exist on disk we
 it into the cache and if the partition exists on disk but does not exist in the cache then
 we cannot merge it into the cache since the cache is supposed to be a source of truth
 and therefore we just throw it away.
+
+
 So we have those two policies that we apply according to the situation that we have.
 Great so how does Celadiby handle the multiple version concurrency control with row based
 cache in the mix does it require any special handling?
@@ -495,6 +527,8 @@ This allows applications to read a consistent version of their data in most curr
 cases this doesn't really matter because usually you don't have that high consistency requirement
 but we decided to build an mvcc implementation for future transactional use cases where it's
 a lot more important.
+
+
 So moving on now that we have discussed all the architectural differences between Celadiby
 and Cassandra let's discuss the routing of read and write request in Celadiby so that
 we can touch upon each of the layers in the stack.
@@ -515,6 +549,8 @@ across the network to those replicas.
 If you're using a driver that's supplied by Celadiby then the request will also arrive
 at the correct core so it will not have to make an extra hop within a node to the right
 core and so you will get even better a few put in latency.
+
+
 I see and is the same part also followed for a write request?
 Yes the reads and writes are similar.
 The main difference is in the number of replicas that are contacted for writes always all of
@@ -527,6 +563,8 @@ but you get to reduce the throughput compared to contacting just one replica or 
 even contact all of the replicas for that role in which case you will get the best consistency
 but you may suffer from availability in case a node is down the read might not be able
 to reach all three replicas and the request will not succeed.
+
+
 Great so one thing which Cassandra and Celadiby have in common is the gossip protocol for
 membership changes in the cluster.
 One question which I was thinking about is the interoperability of this membership protocol.
@@ -568,6 +606,8 @@ a leader for every group of partitions and that leader will coordinate all of th
 that go into a particular group of partitions and this way it will be able to prevent concurrent
 rights to the same partitions and we order them in a way that is consistent across all
 the readers.
+
+
 I see.
 So moving on Celadiby claims to be the drop in replacement of Cassandra.
 This would imply an application level API compatibility and a complete support for the
@@ -578,6 +618,8 @@ don't conflict with the Cassandra language in any way and of course there are so
 gaps when we haven't completed a feature and one example is the lightweight transactions.
 But these are always things that are just in progress and not some things that we're implementing
 in a different way on the client level.
+
+
 So it's not just the language that is the same it's also the protocol and so you can
 use a driver the same driver that you've always used and the application will work just the
 same and most of the times when we have an application migrating from Cassandra to Cela
@@ -591,6 +633,8 @@ One of them is support for availability zones so Cela can make sure that there i
 for a given piece of data on each availability zone.
 So if it's just an availability zone that dies then you can recover the data from the
 two surviving availability zones.
+
+
 Another feature is multiple data center so if you have a region or a data center drop
 you can rebuild it from other data centers that have survived and of course for a complete
 disaster you have a backup and restore so Celadiby supports the snapshots you can snapshot
@@ -599,6 +643,8 @@ storage location from which you can reconstruct the database as it was at the po
 So this is just for the clarity this is not the live backup this is more of reconstructing
 the data from enough and of and a touch storage which could potentially require some downtime
 for the application.
+
+
 Am I right?
 Yes that's correct for for live backup you simply create another data center that is
 used for that is being replicated to and that other data center will contain all of the
@@ -609,6 +655,9 @@ one data center and switch over to another data center in the case of disaster o
 you design your applications you can also have them running on all data centers all
 of the time and just increase the number of instances in case you have a reduction of
 capability in one of the data centers.
+
+
+
 So are these two data centers and that centers in continuous sync of each other are they
 synchronizing continuously in an asynchronous fashion or how how far behind one data center
 is as compared to the other data center when replicating rights.
@@ -624,6 +673,8 @@ the data into local disk and trying to replicate it later in case it fails if yo
 failure and also there are facilities like repair which allows you to re-synchronize
 in case you had a loss of connection between between two data centers but in general the
 database is fully synchronized at all time.
+
+
 So just for the clarity the scenario where you described about asynchronous replication
 and also asynchronous replication offering are you talking about replication across two
 different SillaDB clusters or are you talking about replication between a replica copy for
@@ -634,6 +685,8 @@ drivers to only access the local data center in order to reduce latency and the 
 centers are just being replicated too and since multi-master you can also have applications
 in other data centers accessing their local data centers the nodes in the local data centers
 and reading and writing the same data.
+
+
 Great.
 So one last question which I have are the upcoming features in SillaDB.
 Can you briefly tell us what are you working on and when can we expect them to be released?
@@ -660,6 +713,8 @@ has been good for us.
 We will also do our own things we are not restricted to just doing Cassandra compatibility so we
 will bring out one features as well but in general we do plan to bring all of the good
 Cassandra features to server DB.
+
+
 Great.
 So are there any questions I should have asked or something you would like to say to our
 audience?
@@ -671,6 +726,8 @@ It's really great to go in there into a shell into a shell on one of the nodes a
 at how all the cores are utilized and look at the disk utilization and throughput it's
 great to see the disk running at multiple gigabytes per second and all of the cores at
 100% for me it's always a thrill to see every cycle being squeezed from those machines.
+
+
 Right.
 So how can people follow you?
 Oh so you can follow me on Twitter I might be with the sarcastic sometimes but they also

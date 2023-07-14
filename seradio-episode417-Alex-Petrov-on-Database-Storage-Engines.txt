@@ -102,12 +102,16 @@ we can, you know, use like local pointers whenever we address the thing that is 
 So, of course, I'm, you know, just throwing concepts here, but get the idea, right? So, instead of simply allocating and deallocating chunks of memory, you have to, you know, think through an entire structure, basically how to lay it out on the disk, and very little is there to help you because file system, all it gives you is an interface of, you know, seek to a specific point in the file,
 and read a certain number of bytes from that file, and then, well, you can write basically to the same location in the file and that's all you get from it, right? And everything that you implement in the file, like it's header, it's like trailer, and everything in between those is pretty much like your pages, and it's certainly much more difficult than implementing
 and in memory data structure. However, in memory data structures implemented right, and especially when, like, there is lots of concurrency involved, I would say that it's also not such an easy task. It's just different sets of problems, so to say.
+
+
 So, a programming language is have a lot of concepts for dealing with memory, right? Like, even just, we have pointers that we can follow, but on disk you're saying, like, we have to build all these constructs ourselves, we have to build our own little pointer, you know, oh, this means jump to here.
 Why do we need databases and why not just files?
 In my opinion, main reasons for preferring a database over flat files is like, first one is storage efficiency.
 So, files are organized in the database files are organized in the way that minimizes the storage overhead per store data record, which is not necessarily the same for the file system.
 The second one is like access efficiency, so records can be located in the smallest possible number of steps, and here I mean that can also differ for your use case, you know, depending on what exactly you would like to achieve.
 And the third one is update efficiency. So, records updates are performed in a way that minimizes the number of changes on disk.
+
+
 So, you would like to avoid, you know, putting extra strain on your hardware without any need to do that.
 So, in my opinion, that sort of summarizes so storage access and update efficiency is sort of three reasons for us to use file or databases as an abstraction instead of trying to implement our many database every time we're doing it.
 However, from what I heard many databases, at least, you know, in the early days of computing, so to say, were implemented exactly because somebody was tired of doing same thing in every project they were starting so they just decided, okay, I just sit and implement
@@ -118,14 +122,20 @@ And so, I assume like if I were doing that, yeah, first, there's some sort of ma
 So I'd come up with some sort of structure. So you mentioned earlier, LSM trees versus B trees. So what's a B tree?
 Let me then pause you for a sec, and let's just take one more step back and discuss. What are the trees in general and why we need them, right?
 Yeah. So when we were talking, for instance, about hash tables, we decided or we concluded that in order to search, not a single value by a single key, but like a range of values by a specific key, we need a structure that is different from a hash map.
+
+
 And one of the data structures that we can implement in memory is a tree, a simplest way to implement a tree is a binary tree, right? So a node that has two children basically is a binary tree, right?
 But whenever we're trying to, is it sorted?
 So not necessarily. So binary tree only says that, okay, we have a node and two children, and they're not sorted in any way. If we would like to make it sorted, we inevitably once again, sorry, I keep repeating this word, gonna come to the concept of binary search tree.
 So why we come to that is because binary tree is unbalanced, right? So you can have more elements on one side or on the other, and there is nothing that tries to, you know, maintain some sort of order in this structure.
 So in order to maintain that order, we need some sort of balance tree. One of the examples of that is binary search tree. So binary search tree is a tree, which has at the root. If you look down from the root, basically, it's going to have elements less than the root
+
+
 node on one side and elements that are greater than the root on the other side. So that makes it searchable, right? That means that if we progress from the root node all the way to the left, you know, go following left pointers all the way to the very bottom of the tree.
 We're going to reach the minimum of the tree. So the smallest key that a stored in the street. And if we're doing the same for the right, like following right pointers from the root, we're going to reach the maximum of the tree.
 And this sort of brings us to like the first usable searchable data structure that is, well, can be used in memory and, well, you can implement and use. However, if you're trying to implement binary search tree on disk, you're going to run inevitably in several problems,
+
+
 because one of the things that you're going to be facing is the fact that because you have just, you know, two pointers, you are going to be constantly moving those notes and constantly reassigning those pointers.
 So whatever, for instance, you have a root node and two children, and you have, you know, split the child. So you would have to, you know, reassign all the pointers that were related to everybody that was somehow connected to one another.
 Like all these balancing operations are going to be in a way expensive or going to be costing.
@@ -134,6 +144,9 @@ Exactly. So that's one, one problem. And the second problem is, of course, local
 So we may end up actually seeking the disk quite a lot, you know, just running around and trying to locate the things that we would like to find.
 Because like you said before, on disk, like every pointer, you just have to go to a different location on the disk for every pointer follow, in theory.
 Yeah, in theory, yes. Of course, you can optimize for that. And this is how we sort of progress to be trees or be plus trees.
+
+
+
 So we just discussed, we progress from hash maps to binary trees, then to binary search trees.
 And then we concluded that binary search trees are not a good fit for the disk because they have very low fan out and potentially bad locality.
 And we can solve it by basically increasing the fan out and improving the locality. Right.
@@ -142,15 +155,21 @@ In binary search tree, we have a single key per node. And this key pretty much t
 So if we look to the right, we see, you know, all the values that are smaller than, and if we look the opposite direction, we see all the values that are larger than.
 And so we are always sort of standing in the middle. So it's always sort of a separator key, right, that splits the range that we're searching into parts.
 And unlike binary search trees, be trees have many keys. And so the relationship between the number of child notes and the number of keys is maintained.
+
+
 So it's the same as in binary search keys. So it means that in the binary search tree, we have a single key and two pointers.
 And in a B tree, we have N keys and N plus one pointers to the children. So this sort of makes a data structure that, well, first of all, whenever we're searching something, we know that we can very quickly locate the keys on this level, right,
 because all the notes that are required in order for us to, well, reduce the search space are pretty much are located on this page. So we fetch or read one, a single page from the disk, and then load it up in memory and then start searching this memory segment.
+
+
 Usually we use something like a binary search, because all the keys are sorted. And then we locate the searched key. And this key has a pointer, a child pointer that is attached to this key.
 And then we follow the child pointer to the next level. And then on the next level, we do the same thing. We load an entire page. We binary search keys, find the key that, well, is pretty much matching whatever we're searching.
 Once again, follow the pointer that is attached to this key, all the way to, well, the bottom of the tree to the leaf node, where we can finally find the data.
 So, and once again, we have more than one key per node, and we have many children. And this sort of solves all the problems that we had with the binary search trees.
 Because we can seek from disk kind of this big chunk that is our children pointers and go through them all in one pass.
 I think that, so now, if I'm a database engine, so I'm using my B tree, I have less changes when a key comes in. Like, if I want to insert something new, there's less changes.
+
+
 But it still has to happen. I assume we have a maximum size than any node will have in terms of children. And if I get a new element that would be sorted into the middle of a full page, then what do I do?
 So, yeah, whenever we were talking about the binary search trees, we briefly mentioned, I think I even slipped and said that splits and merges, however, there are obviously no splits and merges in the binary search trees.
 So, what binary search trees do in order to increase the capacity, they sort of append the node to the bottom most level, or wherever it fits basically, and then they rotate. So, a rotation step is a way to balance the tree.
@@ -161,22 +180,31 @@ And of course, in order to outgrow the capacity of this tree, we will have to pe
 basically the capacity of the tree grows exponentially as the number of levels is increasing, which is the advantage. Like if I understand because that's like in a traditional spinning hard disk that's going to be like fewer seeks, right?
 Because you only have to go down, say three levels or something. Exactly. Exactly. So what you usually end up doing is you end up reading maybe four, five pages depending on the depth of your tree. But basically you're going to in terms of disk seeks, you're going to have as many disk seeks as you have levels.
 I mean, there are, of course, edge cases as everywhere to whatever I'm saying, but in a general case, that's true.
+
+
 Yeah. So now I understand like I made my storage engine. I have some sort of file. I split my file up into pages, then I'm going to use those pages to make this tree so that I can update, write things, insert things.
 We haven't talked about indexes. So how would I represent an index? Okay. Well, first of all, the question is going to be, haven't we really talked about indexes? Are you sure about that?
 So maybe we were talking about indexes all the time, in fact, and thing is that there is a very fine line between indexes and tables. In fact, it's very difficult to actually find the difference.
 And some of the indexes are actually just tables. It's just like tables inverted by a specific key. So if you are thinking about like a table with some sort of a primary key, it's nothing but a bunch of data that is indexed by a primary key.
+
+
 So in the end, this is sort of an index. So usually we're talking about index organized tables, which people usually say just tables. And whenever we're talking about indexes, we're usually talking about something, a structure that points to the index organized table.
 So even here we have, we can have potentially like several distinctions. One of the ways to implement this is going to be an index that is holding a primary key, which uniquely identifies the record.
 And the other one is storing a pointer on disk basically where the record can be found. And the difference between these two approaches is as follows. In first case, whenever we're storing the key of the record that can be located, we have to perform sort of extra steps, right?
 So for instance, during the read, yeah, what we have like read like whenever we approved the index and we found that okay, the primary key of the record that we would like to find this such and such, then we go to index organized table and find these record, right.
 But whenever we update, we have to go back to the index and update okay and say that these keys, or these values are not indexed this way anymore. So we sort of have to keep the index and sing with the index organized table.
 Because they moved right. For instance, we were indexing people by their zip code right and somebody has moved. That means that a specific person that was previously found by a specific ID has moved from one zip to the other one.
+
+
 That means that an index with like zip codes or index by zip code has to be updated and the record with this person has to be removed from the his previous or their previous zip code and added to their new zip code.
 So that's one of the things. And if we once again take a different approach that I just briefly mentioned, and we are storing the pointer directly to basically where the data record distort.
 Obviously, we will still have to update the index in order to say for instance, if the person has moved, so we would have to move it from one index bucket to the other one.
 So this has no implications in this case. If we are storing the direct disk offset, we can just bypass searching the index organized table.
 That means that we can, after we found the position of the record on disk, we can just you know go ahead and read it so we don't have to search this index organized table anymore.
 So in short, coming back once again to the your question about indexes and whether or not we talked about them. So indexes are sort of same, you know, so you can actually have B3 B plus tree indexes.
+
+
+
 Let me make sure that I understand the B tree example of indexes. So I have I have my user table, and I'm going to store that as like the B plus tree on disk. Say I have an auto increment ID or something right so my tree is sorted using the ID.
 And that's my primary key. So I understand that so it's easy to look up my primary key. I want to add an index on zip code. So you're saying, in fact, it's all the same thing.
 You just make another B tree, but now the key is zip code. So we have it sorted by zip code. And then I think you're saying the distinction is where that pointer goes to. So the pointer could either tell me the ID, which then I have to go look up again in the other B tree.
@@ -187,6 +215,8 @@ important, automated ID. What we can do is create an index by zip code. And then
 So we basically say, I don't know, your zip code, and then pretty much your name, your first name, your last name, and maybe even your ID for, you know, some extra information, or just for maintenance purposes. So you can do virtually anything because it's just a matter of how you're going to be accessing
 things. So the advantage of the very first approach, meaning that whenever we build a index by zip code, and are storing just an ID of the record in the main table.
 The biggest advantage of that is, of course, that we don't have to duplicate the data. Right. We have the record record just once.
+
+
 Yeah. The disadvantage of this specific approach is that we have to look up the table, right? So the main table, whenever after searching the index. So we sort of do two, three traversals, potentially.
 In order to mitigate this second tree traversal, what we can do is we can store the pointer to this structure from index directly the offset to the disk where the record is stored. But obviously, in this case, we're coupling these two tables
 to tables very tightly. Then that means that whenever one is updated, the second one just cannot be out of sync, or we should come up with some sort of a mechanism that would, you know, gracefully fall back in case this page was relocated or record was removed or something different has
@@ -196,6 +226,8 @@ And as far as I remember, like what database lets you choose as far as remember 
 And what I wanted to mention here is, there was a blog post, I think from Uber, where they were discussing exactly the difference, exactly that difference between, you know, different databases, I think was my skill and postgres and an implication of, you know, either storing a direct pointer or, you know, referencing things
 through a level of interaction. So it was not exactly the same thing, but it was in sort of similar real, I think that it was related to addressing the values through the interaction table or in the primary
 call all developers. There's no telling what you can create when you upgrade your data platform to intersystems iris. Are you ready to build the applications you want, however you want them? Are you ready to develop applications faster than ever? Collaborate, build faster and deploy more efficiently.
+
+
 Tomorrow's next breakthroughs are waiting for you today. Intersystems iris data platform. Ready, set code. Start coding for free. Visit intersystems.com slash try to try iris.
 There seems to be attention here, which I saw in your books well, like a read versus write efficiency tension. So where if you duplicate things into your index, right, it makes writing data or updating data more expensive, but reading faster.
 So yeah, there is always a tension between reading and updating and in fact, there is a conjecture, which is called to rum conjecture. It states that we have three, like a triangle of things that are interconnected.
@@ -204,6 +236,8 @@ And the these three things are connected in a way that if you have an improvemen
 So you cannot be like as efficient as you would like to be in terms of both reads and updates and memory at the same time. So you have to make a compromise. You have to choose.
 And the this paper about this rum conjecture is very interesting. And it brings up several topics that probably are of use for anybody who is who has something to do with either databases or backends in general.
 And I definitely recommend to read it if you haven't yet. And one of the probably most widely known or discussed examples is of course the dichotomy of LSM versus B trees, meaning that B trees are allegedly heavily read optimized and the LSM trees are heavily right optimized.
+
+
 And that sounds like a good transition, I think. So what is the LSM tree.
 Okay, so yeah, now we have to talk about like yet another sort of the tree. If you take B tree, and then you would like to say, let's make the pages of this B tree immutable, meaning that whatever you make a change to the page.
 So we are not going to, you know, find the same location in the file and try to override it. Instead, like every page is just, you know, going to be a completely new instance of the page appended to the end of the file.
@@ -227,6 +261,8 @@ And this is going to be in the right ahead log.
 So this is one of the probably most important parts of the storage engine or most of the storage engines that I had to do with.
 So you were saying we were doing a copy on right B tree?
 Exactly.
+
+
 Yes.
 So we were trying to progress towards our sem trees.
 And so yeah, we just got a copy on right B trees and we added in you ability to regular B trees.
