@@ -1,3 +1,5 @@
+**Link** https://www.se-radio.net/2020/06/episode-413-spencer-kimball-on-cockroachdb/
+
 This is Software Engineering Radio, the podcast for professional developers on the web at
 se-radio.net.
 SE Radio is brought to you by the IEEE Computer Society, by IEEE Software Magazine.

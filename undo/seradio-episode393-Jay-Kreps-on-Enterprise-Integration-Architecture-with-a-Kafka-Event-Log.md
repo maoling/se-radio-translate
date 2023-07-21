@@ -1,3 +1,6 @@
+**Link** https://www.se-radio.net/2019/12/episode-393-jay-kreps-on-enterprise-integration-architecture-with-a-kafka-event-log/
+
+
 This is Software Engineering Radio, the podcast for professional developers on the web at se-radio.net
 Se-radio is brought to you by the IEEE Computer Society, the IEEE Software magazine online at computer.org
 software
