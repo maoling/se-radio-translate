@@ -151,150 +151,50 @@ But what do you think is a disadvantage of having multiple application threads p
 
 **Nishant Suneja** 00:49:27 Great. Can you briefly describe what a lightweight transaction is and how is ScyllaDB implementing them in the future release?
 
-**Avi Kivity** 00:49:38 Yes so we plan to use the Raft protocol instead of the older Paxos protocol in order to establish
-a leader for every group of partitions and that leader will coordinate all of the rights
-that go into a particular group of partitions and this way it will be able to prevent concurrent
-rights to the same partitions and we order them in a way that is consistent across all
-the readers.
+**Avi Kivity** 00:49:38 Yes so we plan to use the Raft protocol instead of the older Paxos protocol in order to establish a leader for every group of partitions and that leader will coordinate all of the writes that go into a particular group of partitions and this way it will be able to prevent concurrent writes to the same partitions and we order them in a way that is consistent across all the readers.
 
+**Nishant Suneja** 00:50:16 I see. So moving on ScyllaDB claims to be the drop in replacement of Cassandra. This would imply an application level API compatibility and a complete support for the Cassandra query language. Is that always true or there are places where the two diverge?
 
-I see.
-So moving on ScyllaDB claims to be the drop in replacement of Cassandra.
-This would imply an application level API compatibility and a complete support for the
-Cassandra query language.
-Is that always true or there are places where the two diverge?
-So we try not to diverge sometimes we add extensions but we try to make sure that they
-don't conflict with the Cassandra language in any way and of course there are sometimes
-gaps when we haven't completed a feature and one example is the lightweight transactions.
-But these are always things that are just in progress and not some things that we're implementing
-in a different way on the client level.
+**Avi Kivity** 00:50:36 So we try not to diverge sometimes we add extensions but we try to make sure that they don't conflict with the Cassandra language in any way and of course there are sometimes gaps when we haven't completed a feature and one example is the lightweight transactions. But these are always things that are just in progress and not some things that we're implementing in a different way on the client level. So it's not just the language that is the same it's also the protocol and so you can use a driver the same driver that you've always used and the application will work just the same and most of the times when we have an application migrating from Cassandra to Scylla it needs zero changes it just starts working with the higher throughput and lower latency.
 
+**Nishant Suneja** 00:51:30 So like Cassandra ScyllaDB has a support of constructing multi data center rings to provide higher availability SLA guarantees. However, what features does ScyllaDB provide for live backup and restore in case of a region failure if for example the customer is hosting a ScyllaDB cluster on AWS?
 
-So it's not just the language that is the same it's also the protocol and so you can
-use a driver the same driver that you've always used and the application will work just the
-same and most of the times when we have an application migrating from Cassandra to Cela
-it needs zero changes it just starts working with the higher throughput and lower latency.
-So like Cassandra ScyllaDB has a support of constructing multi data center rings to provide
-higher availability SLA guarantees.
-However, what features does ScyllaDB provide for live backup and restore in case of a region
-failure if for example the customer is hosting a ScyllaDB cluster on AWS?
-Yes, so there are several features that increase availability.
-One of them is support for availability zones so Cela can make sure that there is one replica
-for a given piece of data on each availability zone.
-So if it's just an availability zone that dies then you can recover the data from the
-two surviving availability zones.
+**Avi Kivity** 00:51:52 Yes, so there are several features that increase availability. One of them is support for availability zones so Scylla can make sure that there is one replica for a given piece of data on each availability zone. So if it's just an availability zone that dies then you can recover the data from the two surviving availability zones. Another feature is multiple data center so if you have a region or a data center drop you can rebuild it from other data centers that have survived and of course for a complete disaster you have a backup and restore so ScyllaDB supports the snapshots you can snapshot the database at any point and you get the set of files that you can then copy to an offline storage location from which you can reconstruct the database as it was at the point of backup.
 
+**Nishant Suneja** 00:52:46 So this is just for the clarity this is not the live backup this is more of reconstructing the data from enough and of and a touch storage which could potentially require some downtime for the application.Am I right?
 
-Another feature is multiple data center so if you have a region or a data center drop
-you can rebuild it from other data centers that have survived and of course for a complete
-disaster you have a backup and restore so ScyllaDB supports the snapshots you can snapshot
-the database at any point and you get the set of files that you can then copy to an offline
-storage location from which you can reconstruct the database as it was at the point of backup.
-So this is just for the clarity this is not the live backup this is more of reconstructing
-the data from enough and of and a touch storage which could potentially require some downtime
-for the application.
+**Avi Kivity** 00:53:06 Yes that's correct for for live backup you simply create another data center that is used for that is being replicated to and that other data center will contain all of the data that your database has and you can also switch your applications to that and in fact most deployments behave like that it's it's a multi master database so you can have recent writes to all of the data centers in parallel you can have your applications run only on one data center and switch over to another data center in the case of disaster or if you design your applications you can also have them running on all data centers all of the time and just increase the number of instances in case you have a reduction of capability in one of the data centers.
 
+**Nishant Suneja** 00:53:54 So are these two data centers and that centers in continuous sync of each other are they synchronizing continuously in an asynchronous fashion or how how far behind one data center is as compared to the other data center when replicating writes.
 
-Am I right?
-Yes that's correct for for live backup you simply create another data center that is
-used for that is being replicated to and that other data center will contain all of the
-data that your database has and you can also switch your applications to that and in fact
-most deployments behave like that it's it's a multi master database so you can have recent
-rights to all of the data centers in parallel you can have your applications run only on
-one data center and switch over to another data center in the case of disaster or if
-you design your applications you can also have them running on all data centers all
-of the time and just increase the number of instances in case you have a reduction of
-capability in one of the data centers.
+**Avi Kivity** 00:54:16 So both modes are supported if you choose you can have synchronous replication so that when you issue a write to the database it will wait until the other data centers have been fully synchronized and that gives you a high guarantee of consistency but it trades off latency so you will have to wait for the round trip to those other data centers. The other option is have asynchronous replication in which case you get the response only from the local replicas and still will continue replication in the background typically it's just a few hundred milliseconds delay just the time takes for the data to propagate and Scylla also tries to make tries very hard to make sure that the data is replicated by writing the data into local disk and trying to replicate it later in case it fails if you have a network failure and also there are facilities like repair which allows you to re-synchronize in case you had a loss of connection between between two data centers but in general the database is fully synchronized at all time.
+
+**Nishant Suneja** 00:55:28 So just for the clarity the scenario where you described about asynchronous replication and also asynchronous replication offering are you talking about replication across two different ScyllaDB clusters or are you talking about replication between a replica copy for a keyspace within a single ScyllaDB cluster?
+
+**Avi Kivity** 00:55:54 It's a single cluster that is spread across multiple data centers. The database is data-center aware and so are the client drivers so you can ask the client drivers to only access the local data center in order to reduce latency and the other data centers are just being replicated too and since multi-master you can also have applications in other data centers accessing their local data centers the nodes in the local data centers and reading and writing the same data.
+
+**Nishant Suneja** 00:56:27 Great. So one last question which I have are the upcoming features in ScyllaDB. Can you briefly tell us what are you working on and when can we expect them to be released?
+
+**Avi Kivity** 00:56:39 Yes, so two features which we've worked on for a while and will be released in 3.0 that all are support for a new ScyllaDB format also compatible with Cassandra and that brings improved support for large partitions so queries within large partitions will be faster and also the amount of storage that is used will be lower so less storage overhead. The other feature which we've been working on for a long while is Materialized views so this has been available in experimental mode for a long while but in 3.0 it will be available for production and other features that we are working on lightweight transactions like I mentioned we also hope to bring tiered storage so that you could use different types of storage in the same node you will have expensive and fast storage as a fastier and less expensive and slower storage for your slow tier an example of that can be the NVMA disks that are available on Amazon instances and EBS disks which are slower but less expensive and by using a mix of fast and slow storage you can reduce your storage costs while still providing a high performance.
+
+**Nishant Suneja** 00:58:00 Great. Do you plan to track the Cassandra features in the future or branch off and become something completely different?
+
+**Avi Kivity** 00:58:10 In general we do plan to continue providing the Cassandra features. The Cassandra ecosystem is great there are lots of drivers for all languages and other ecosystem participants like Spark and Presto that work with Cassandra so Cassandra compatibility has been good for us. We will also do our own things we are not restricted to just doing Cassandra compatibility so we will bring out one features as well but in general we do plan to bring all of the good Cassandra features to ScyllaDB.
+
+**Nishant Suneja** 00:58:45 Great. So are there any questions I should have asked or something you would like to say to our audience?
+
+**Avi Kivity** 00:58:54 I think not I think that you've asked really good questions. I think that one thing I can say is that you can try ScyllaDB using the test drive system that we have which spins up a cluster for an hour and that allows you to see ScyllaDB in action. It's really great to go in there into a shell into a shell on one of the nodes and look at how all the cores are utilized and look at the disk utilization and throughput it's great to see the disk running at multiple gigabytes per second and all of the cores at 100% for me it's always a thrill to see every cycle being squeezed from those machines.
+
+**Nishant Suneja** 00:59:39 Right. So how can people follow you?
+
+**Avi Kivity** 00:59:42 Oh so you can follow me on Twitter I might be with the sarcastic sometimes but they also give some good information. You can follow the ScyllaDB blog where I write some blog posts and we have a great technical blog so which not only covers new features and things about how to use Scylla but also the decisions behind Scylla and more low level stuff so things like what we've been discussing in this podcast. So if what we talked about is interesting to you I really recommend following the ScyllaDB post the user and the technical blog.
+
+**Nishant Suneja** 01:00:24 So Avi thank you for coming on the show.
+
+**Avi Kivity** 01:00:26 Oh it was my pleasure.
+
+**Nishant Suneja** 01:00:28 This is Nishant Sunasia for Software Engineering Radio thank you for listening.
 
 
 
-So are these two data centers and that centers in continuous sync of each other are they
-synchronizing continuously in an asynchronous fashion or how how far behind one data center
-is as compared to the other data center when replicating rights.
-So both modes are supported if you choose you can have synchronous replication so that
-when you issue a right to the database it will wait until the other data centers have
-been fully synchronized and that gives you a high guarantee of consistency but it trades
-off latency so you will have to wait for the round trip to those other data centers.
-The other option is have asynchronous replication in which case you get the response only from
-the local replicas and still will continue replication in the background typically it's
-just a few hundred milliseconds delay just the time takes for the data to propagate and
-Scylla also tries to make tries very hard to make sure that the data is replicated by writing
-the data into local disk and trying to replicate it later in case it fails if you have a network
-failure and also there are facilities like repair which allows you to re-synchronize
-in case you had a loss of connection between between two data centers but in general the
-database is fully synchronized at all time.
-
-
-So just for the clarity the scenario where you described about asynchronous replication
-and also asynchronous replication offering are you talking about replication across two
-different ScyllaDB clusters or are you talking about replication between a replica copy for
-a key space within a single ScyllaDB cluster?
-It's a single cluster that is spread across multiple data centers.
-The database is data center aware and so are the client drivers so you can ask the client
-drivers to only access the local data center in order to reduce latency and the other data
-centers are just being replicated too and since multi-master you can also have applications
-in other data centers accessing their local data centers the nodes in the local data centers
-and reading and writing the same data.
-
-
-Great.
-So one last question which I have are the upcoming features in ScyllaDB.
-Can you briefly tell us what are you working on and when can we expect them to be released?
-Yes, so two features which we've worked on for a while and will be released in three
-that all are support for a new ScyllaDB format also compatible with Cassandra and that brings
-improved support for large partitions so queries within large partitions will be faster and
-also the amount of storage that is used will be lower so less storage overhead.
-The other feature which we've been working on for a long while is materialist views so
-this has been available in experimental mode for a long while but in 3.0 it will be available
-for production and other features that we are working on lightweight transactions like
-I mentioned we also hope to bring tiered storage so that you could use different types of
-storage in the same node you will have expensive and fast storage as a fastier and less expensive
-and slower storage for your slow tier an example of that can be the NVMA disks that are available
-on Amazon instances and EBS disks which are slower but less expensive and by using a mix
-of fast and slow storage you can reduce your storage costs while still providing a high
-performance.
-Great.
-Do you plan to track the Cassandra features in the future or branch off and become something
-completely different?
-In general we do plan to continue providing the Cassandra features.
-The Cassandra ecosystem is great there are lots of drivers for all languages and other
-ecosystem participants like Spark and Presto that work with Cassandra so Cassandra compatibility
-has been good for us.
-We will also do our own things we are not restricted to just doing Cassandra compatibility so we
-will bring out one features as well but in general we do plan to bring all of the good
-Cassandra features to server DB.
-
-
-Great.
-So are there any questions I should have asked or something you would like to say to our
-audience?
-I think not I think that you've asked really good questions.
-I think that one thing I can say is that you can try ScyllaDB using the test drive system
-that we have which spins up a cluster for an hour and that allows you to see CLDB in
-action.
-It's really great to go in there into a shell into a shell on one of the nodes and look
-at how all the cores are utilized and look at the disk utilization and throughput it's
-great to see the disk running at multiple gigabytes per second and all of the cores at
-100% for me it's always a thrill to see every cycle being squeezed from those machines.
-
-
-Right.
-So how can people follow you?
-Oh so you can follow me on Twitter I might be with the sarcastic sometimes but they also
-give some good information.
-You can follow the ScyllaDB blog where I write some blog posts and we have a great technical
-blog so which not only covers new features and things about how to use Scylla but also
-the decisions behind Scylla and more low level stuff so things like what we've been discussing
-in this podcast.
-So if what we talked about is interesting to you I really recommend following the ScyllaDB
-post the user and the technical blog.
-So V thank you for coming on the show.
-Oh it was my pleasure.
-This is Nishant Sunasia for Software Engineering Radio thank you for listening.
-Thanks for listening to SE Radio an educational program brought to you by IEEE Software magazine.
-For more about the podcast including other episodes visit our website at se-radio.net.
-To provide feedback you can comment on each episode on the website or reach us on LinkedIn,
-Facebook, Twitter or through our Slack channel at se-radio.slack.com.
-You can also email us at team at se-radio.net.
-This and all other episodes of SE Radio is licensed under Creative Commons license 2.5.
-Thanks for listening.
+Thanks for listening to SE Radio an educational program brought to you by IEEE Software magazine. For more about the podcast including other episodes visit our website at se-radio.net. To provide feedback you can comment on each episode on the website or reach us on LinkedIn, Facebook, Twitter or through our Slack channel at se-radio.slack.com. You can also email us at team at se-radio.net. This and all other episodes of SE Radio is licensed under Creative Commons license 2.5. Thanks for listening.
