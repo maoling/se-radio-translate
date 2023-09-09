@@ -2,50 +2,21 @@ Link: https://www.se-radio.net/2015/11/se-radio-episode-241-kyle-kingsbury-on-co
 
 
 
+This is Software Engineering Radio, the podcast for professional developers on the web at se-radio.net. SC Radio brings you relevant and detailed discussions of software engineering topics at least once a month. SE Radio was brought to you by IEEE Software Magazine, online at computer.org slash software.
 
-This is Software Engineering Radio, the podcast for professional developers on the web at
-sce-radio.net.
-SC Radio brings you relevant and detailed discussions of software engineering topics
-at least once a month.
-SC Radio was brought to you by IEEE Software Magazine, online at computer.org slash software.
-For Software Engineering Radio, this is Stefan Tilkoff.
+**Stefan Tilkov** 00:00:36 For Software Engineering Radio, this is Stefan Tilkov Today I'm joined by Kyle Kingsbury, better known by his Twitter handle Aphyr, to talk about database consistency. Kyle has become quite famous in the community because of his tendency to break databases that is, use rigorous testing to show how they deal with various error scenarios. I've been a long time follower of Kyle's posts and talks, and I'm sure you'll be as fascinated as I am, by his insights into the theory and practice of databases handling failure, or, unfortunately more often, failing to do so to varying degrees. Kyle, why don't you start us off by introducing yourself and tell us a little bit about yourself?
 
-Today I'm joined by Kyle Kingsbury, better known by his Twitter handle A-Fear, to talk
-about database consistency.
-Kyle has become quite famous in the community because of his tendency to break databases
-that is, use rigorous testing to show how they deal with various error scenarios.
-I've been a long time follower of Cal's posts and talks, and I'm sure you'll be as
-fascinated as I am, by his insights into the theory and practice of databases handling
-failure, or, unfortunately more often, failing to do so to varying degrees.
-Kyle, why don't you start us off by introducing yourself and tell us a little bit about yourself?
+**Kyle Kingsbury** 00:01:20 Well, my name is Kyle, I'm a backend engineer by trade, and I work right now at a company called Stripe, where I'm doing database safety analysis, trying to understand whether or not distributed systems, caches, databases, queues, that sort of thing, whether or not they live up to the guarantees that we expect from them.
 
-Well, my name is Kyle, I'm a back-end engineer by trade, and I work right now at a company
-called Stripe, where I'm doing database safety analysis, trying to understand whether or
-not distributed systems, caches, databases, queues, that sort of thing, whether or not
-they live up to the guarantees that we expect from them.
-Okay, so for those of our listeners who haven't really been exposed to those kinds of problems,
-can you talk a little bit about what issues might arise when people use technologies like
-that?
-Sure thing, we see consistency problems all the time.
-For example, you might go to Twitter and read some direct messages, and then go from
-the website to your phone, and you'd notice the same direct messages are shown as unread.
-That's a synchronization problem, a consistency problem, where different computers, different
-clients have different ideas about the state of the system.
-And this goes much deeper, you can get into errors with bank accounts.
-For example, there was a famous Bitcoin exchange that lost a lot of money because it's not
-correctly debit and credit accounts in a transaction.
-Facebook, for example, has all sorts of interesting out-of-order issues with display.
-These are problems that arise sometimes because they're simply no good way to do them at scale.
-And sometimes just because we didn't understand what the necessary safety permits were.
-So is this something that only companies that run really, really big data centers are exposed
-to?
-Do I have to be running something like Facebook or Twitter to run into those kinds of problems?
-I don't think so.
-But it's tricky to give good data about it because most people instrument their consistency.
-They don't measure whether the system is actually safe.
-So one of the things I'm trying to answer is how likely is it that you might see real-world
-impact during certain common failure modes?
-So one of the things that I often run into is that people who use traditional relational
+**Stefan Tilkov** 00:01:43 Okay, so for those of our listeners who haven't really been exposed to those kinds of problems, can you talk a little bit about what issues might arise when people use technologies like that?
+
+**Kyle Kingsbury** 00:01:55 Sure thing, we see consistency problems all the time. For example, you might go to Twitter and read some direct messages, and then go from the website to your phone, and you'd notice the same direct messages are shown as unread. That's a synchronization problem, a consistency problem, where different computers, different clients have different ideas about the state of the system. And this goes much deeper, you can get into errors with bank accounts. For example, there was a famous Bitcoin exchange that lost a lot of money because it's not correctly debit and credit accounts in a transaction. Facebook, for example, has all sorts of interesting out-of-order issues with display. These are problems that arise sometimes because they're simply no good way to do them at scale. And sometimes just because we didn't understand what the necessary safety permits were.
+
+**Stefan Tilkov** 00:02:46 So is this something that only companies that run really, really big data centers are exposed to? Do I have to be running something like Facebook or Twitter to run into those kinds of problems?
+
+**Kyle Kingsbury** 00:02:56 I don't think so. But it's tricky to give good data about it because most people instrument their consistency. They don't measure whether the system is actually safe. So one of the things I'm trying to answer is how likely is it that you might see real-world impact during certain common failure modes?
+
+**Stefan Tilkov** 00:03:15 So one of the things that I often run into is that people who use traditional relational
 databases, the articles and DBTUs and MySQLs and Postgres, whatever, most kinds of things
 believe that they don't have to worry about those things.
 
