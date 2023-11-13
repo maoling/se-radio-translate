@@ -186,7 +186,7 @@ This is Software Engineering Radio, the podcast for professional developers on t
 
 **Robert** 00:57:30 Do you personally write or blog anywhere?
 
-**Jonathan Ellis** 00:57:32 I do most of my blog in these days on the Datastax website. So that is I think it's that's the next time slash blog, but it's definitely from the main site. And I'm I'm spiced on Twitter as py for sort of obscure historical reasons.
+**Jonathan Ellis** 00:57:32 I do most of my blog in these days on the Datastax website. So that is I think it's that's the next time slash blog, but it's definitely from the main site. And I'm I'm spiced on Twitter as spyced(@spyced) for sort of obscure historical reasons.
 
 **Robert** 00:57:53 We will have a link to that and all the academic or research papers that you've mentioned in the show notes. So Jonathan also thank you very much for talking to software engineering radio. Thanks for having me on the program.
 
