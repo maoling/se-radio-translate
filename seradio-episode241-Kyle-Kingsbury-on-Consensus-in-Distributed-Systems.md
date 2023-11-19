@@ -16,224 +16,52 @@ This is Software Engineering Radio, the podcast for professional developers on t
 
 **Kyle Kingsbury** 00:02:56 I don't think so. But it's tricky to give good data about it because most people instrument their consistency. They don't measure whether the system is actually safe. So one of the things I'm trying to answer is how likely is it that you might see real-world impact during certain common failure modes?
 
-**Stefan Tilkov** 00:03:15 So one of the things that I often run into is that people who use traditional relational
-databases, the articles and DBTUs and MySQLs and Postgres, whatever, most kinds of things
-believe that they don't have to worry about those things.
+**Stefan Tilkov** 00:03:15 So one of the things that I often run into is that people who use traditional relational databases, the articles and DBTUs and MySQLs and Postgres, whatever, most kinds of things believe that they don't have to worry about those things. Are they right?
 
+**Kyle Kingsbury** 00:03:32 Yeah. It depends. There are certainly consistency issues in relational databases as well. There was a paper published recently actually on a Postgres error where it's serializable isolation level failed to be serializable in a sort of surprising way. And so I think you'll find these safety issues affect people both at a level of bugs and just because understanding the weaker, anti-ascual isolation levels is a little bit tricky. The spec is not entirely clear about what shouldn't happen.
 
-Are they right?
-Yeah.
-It depends.
-There are certainly consistency issues in relational databases as well.
-There was a paper published recently actually on a Postgres error where it's serializable
-isolation level failed to be serializable in a sort of surprising way.
-And so I think you'll find these safety issues affect people both at a level of bugs and
-just because understanding the weaker, anti-ascual isolation levels is a little bit tricky.
-The spec is not entirely clear about what shouldn't happen.
-Can you talk a bit through those isolation levels?
+**Stefan Tilkov** 00:04:02 Can you talk a bit through those isolation levels?
 Not necessarily all of them, but give us an idea about what is specified there?
-Sure thing.
-So as I understand it, as relational databases are coming into their own, different database
-companies realized that it was impossible to provide complete, nice global orders for
-events in the system.
-You want all your transactions to look like they take place sequentially one after the
-other.
-But actually doing that is relatively expensive.
-And so maybe there are shortcuts.
-Maybe you could avoid taking out a complete lock and allow two transactions and don't
-touch the same data to complete the same time.
-When you do that, there are different tradeouts you can make regarding how long your card
-locks for, whether you lock for reads or writes.
-If you do multi-version currency control, you can get different sort of what we call anomalies.
-Their behavior patterns, orders in which transactions could execute, that look maybe a little bit
-dodgy.
-In some cases they're okay, but in some cases they're not.
-For example, we get a problem called phantoms where you might write a new record into a
-data set.
-And at the same time you make a query against a table.
-And that query should have seen the new record, but does not because it's predicate didn't
-yet match for whatever reason.
-So maybe access to the same row in the table is synchronized correctly, but that row might
-not appear in a query that should have seen it.
-It's a subtle trick you think the reason about.
-So what happened was the different database manufacturers were starting to standardize
-and nobody wants to be left out.
-So we have this standard NCSQL that codifies different levels of safety.
-And those levels sort of correspond to whatever trade-offs the databases might have made historically
-so everybody could say they slaughtered them somewhere.
-So practice you'll get a wide variety of interpretations of those anomalies and then different levels
-of actual conformance to the spec.
-One thing that I find interesting is that you can actually specify some of those or configure
-them, right?
-You can make a decision of what kind of isolation level you want.
-So this idea is nothing new.
 
+**Kyle Kingsbury** 00:04:10 Sure thing. So as I understand it, as relational databases are coming into their own, different database companies realized that it was impossible to provide complete, nice global orders for events in the system. You want all your transactions to look like they take place sequentially one after the other. But actually doing that is relatively expensive. And so maybe there are shortcuts. Maybe you could avoid taking out a complete lock and allow two transactions and don't touch the same data to complete the same time. When you do that, there are different tradeouts you can make regarding how long your card locks for, whether you lock for reads or writes. If you do multi-version currency control, you can get different sort of what we call anomalies. Their behavior patterns, orders in which transactions could execute, that look maybe a little bit dodgy. In some cases they're okay, but in some cases they're not. For example, we get a problem called phantoms where you might write a new record into a data set. And at the same time you make a query against a table. And that query should have seen the new record, but does not because it's predicate didn't yet match for whatever reason. So maybe access to the same row in the table is synchronized correctly, but that row might not appear in a query that should have seen it. It's a subtle trick you think the reason about. So what happened was the different database manufacturers were starting to standardize and nobody wants to be left out. So we have this standard NCSQL that codifies different levels of safety. And those levels sort of correspond to whatever trade-offs the databases might have made historically so everybody could say they slaughtered them somewhere. So practice you'll get a wide variety of interpretations of those anomalies and then different levels of actual conformance to the spec.
 
-It's been there for a long, long time that people can make, have to make trade-offs regarding
-consistency levels, right?
-Exactly.
-So you can choose to jack up the isolation level serializable for every transaction.
-But this is somewhat slow.
-So a lot of people will start off recommitted or even back after it uncommitted depending
-on what their application needs.
-That's the ideal case.
-But some people will just turn it down to recommitted or leave it at the defaults because
-it's faster without understanding implications and without fully reasoning through the transactions.
-I think it's sort of an open research problem right now.
-I'm not sure which transactions, which patterns of access in the database require which isolation
-levels to be safe.
-So how is this related to the famous cap theorem and can you maybe explain that to us a bit?
-So see, well, there's two things.
-There's actually a cap theorem which is a formal proof by Gilbert Lynch.
-And that tells us that of consistency, which they mean linearizability, availability, which
-means total availability, that is every request to a non-failed node, a non-crashed node must
-succeed.
-And of partition tolerance, that's the P in cap.
-You can only have two out of three.
-Now that actually derives from a sort of conjecture or informal claim made by Eric Brewer that
-of consistency, availability, and purchasing tolerance, there's some tradeoff and you can
-really only look at two out of three.
+**Stefan Tilkov** 00:06:05 One thing that I find interesting is that you can actually specify some of those or configure them, right? You can make a decision of what kind of isolation level you want. So this idea is nothing new. It's been there for a long, long time that people can make, have to make trade-offs regarding consistency levels, right?
 
-So when people talk about cap in a modern context, I think they're typically referring
-to the proof, which is very strict definitions about what availability consists to mean.
-But that doesn't mean that by relaxing consistency, you necessarily get availability.
-There turns to be other proofs that exclude different classes of operations, different
-business classes from being fully available as well.
-So cap is a very particular example of the sort of larger class of problems of consistency.
-A consistency model is a set of allowed histories, allowed behaviors that take basically go
-through.
+**Kyle Kingsbury** 00:06:22 Exactly. So you can choose to jack up the isolation level serializable for every transaction. But this is somewhat slow. So a lot of people will start off recommitted or even back after it uncommitted depending on what their application needs. That's the ideal case. But some people will just turn it down to recommitted or leave it at the defaults because it's faster without understanding implications and without fully reasoning through the transactions. I think it's sort of an open research problem right now. I'm not sure which transactions, which patterns of access in the database require which isolation levels to be safe.
 
-So if you were to take all the different operations you do, like reading a value and writing it
-into some other table or incrementing a number or setting three fields at once on a given
-record, those are all sort of transactions.
-If you take all transactions in a system, in practice, the different transactions are
-applied somewhat concurrently, maybe somebody is writing data and somebody is reading data
-at the same time.
-What you want is for the operations to take place in some kind of order.
-So maybe part of a transaction takes place first, another transaction sneaks in, it does
-a little bit of work, another transaction comes in, does a little bit of work, the first transaction
-comes in and finishes.
+**Stefan Tilkov** 00:06:57 So how is this related to the famous cap theorem and can you maybe explain that to us a bit?
 
-There's lots of different ways those events can be ordered.
-And the consistency model is the class of allowed orderings of those events.
-So CAP tells us about a very particular consistency model.
-Just like NCSQL tells us about certain allowed models, like read-uncommitted, read-committed,
-they prohibit certain classes of orders.
-They prohibit you, for example, from reading the result of another transaction is right
-until your transaction is committed.
-Or you might get snapshot isolation where all of your operations are supposed to take
-place on some atomic snapshot of the world that occurs at some logical time just before
-you commit those consistency classes can only be achieved in certain availability models.
-And there's different theorems that tell us which classes are achievable and which in
-which availability settings.
+**Kyle Kingsbury** 00:07:03 So see, well, there's two things. There's actually a cap theorem which is a formal proof by Gilbert Lynch. And that tells us that of consistency, which they mean linearizability, availability, which means total availability, that is every request to a non-failed node, a non-crashed node must succeed. And of partition tolerance, that's the P in cap. You can only have two out of three. Now that actually derives from a sort of conjecture or informal claim made by Eric Brewer that of consistency, availability, and purchasing tolerance, there's some tradeoff and you can really only look at two out of three. So when people talk about cap in a modern context, I think they're typically referring to the proof, which is very strict definitions about what availability consists to mean. But that doesn't mean that by relaxing consistency, you necessarily get availability. There turns to be other proofs that exclude different classes of operations, different business classes from being fully available as well. So cap is a very particular example of the sort of larger class of problems of consistency. A consistency model is a set of allowed histories, allowed behaviors that take basically go through. So if you were to take all the different operations you do, like reading a value and writing it into some other table or incrementing a number or setting three fields at once on a given record, those are all sort of transactions. If you take all transactions in a system, in practice, the different transactions are applied somewhat concurrently, maybe somebody is writing data and somebody is reading data at the same time. What you want is for the operations to take place in some kind of order. So maybe part of a transaction takes place first, another transaction sneaks in, it does a little bit of work, another transaction comes in, does a little bit of work, the first transaction comes in and finishes. There's lots of different ways those events can be ordered. And the consistency model is the class of allowed orderings of those events. So CAP tells us about a very particular consistency model. Just like NCSQL tells us about certain allowed models, like read-uncommitted, read-committed, they prohibit certain classes of orders. They prohibit you, for example, from reading the result of another transaction is right until your transaction is committed. Or you might get snapshot isolation where all of your operations are supposed to take place on some atomic snapshot of the world that occurs at some logical time just before you commit those consistency classes can only be achieved in certain availability models. And there's different theorems that tell us which classes are achievable and which in which availability settings. CAP tells us that one of the strongest classes of consistency, the one which allows the least number of reorderings, well, not the least, but a very small number. It's still infinite, it's complicated. CAP tells us about linearizability, which is this very strict ordering, and it says that linearizable systems cannot be made to be fully available. If you build a linearizable system and it experiences a network partition, a communication failure between nodes, it's possible for transactions to stall forever or for transactions to be incomplete. You either have to deadlock or give up on certain operations.
 
-CAP tells us that one of the strongest classes of consistency, the one which allows the least
-number of reorderings, well, not the least, but a very small number.
-It's still infinite, it's complicated.
-CAP tells us about linearizability, which is this very strict ordering, and it says that
-linearizable systems cannot be made to be fully available.
-If you build a linearizable system and it experiences a network partition, a communication
-failure between nodes, it's possible for transactions to stall forever or for transactions
-to be incomplete.
-You either have to deadlock or give up on certain operations.
-I think everybody can imagine what consistency means, sort of.
-You mentioned linearizability and the system goes from one consistent state to another,
-and you have this feeling that there's no, you don't get a dirty read of some kind,
-you don't get half committed things and you don't miss anything that has been has been
-written or has been committed.
-I think everybody can imagine what availability is about.
-But I always feel that people struggle with this idea of partition tolerance.
+**Stefan Tilkov** 00:10:23 I think everybody can imagine what consistency means, sort of. You mentioned linearizability and the system goes from one consistent state to another, and you have this feeling that there's no, you don't get a dirty read of some kind, you don't get half committed things and you don't miss anything that has been has been written or has been committed. I think everybody can imagine what availability is about. But I always feel that people struggle with this idea of partition tolerance. Why use a term like that? What does it actually mean?
 
-Why use a term like that?
-What does it actually mean?
-I think that the three partition tolerance is the easiest to understand.
-Oh, that's interesting.
-Yeah, all it means is that the system should be resilient or should continue to function
-in the event that messages are not delivered.
-Okay.
-And we see this happen in production network all the time.
-Microsoft ran a really interesting paper in sitcom a couple of years ago where they measured
-their database packet loss over several years.
-They have a lot of machines and a lot of routers.
-They actually gave pretty good quantitative evidence about the frequency and severity
-partitions.
-It turns out to be far more common than you would expect even with good change control
-even with good hardware.
-Okay.
-So a partition can occur for any number of reasons.
-It doesn't matter whether it's actually the network being down or some other problem along
-the way.
-It's for some reason the message doesn't arrive at the node it was supposed to arrive at.
+**Kyle Kingsbury** 00:10:54 I think that the three partition tolerance is the easiest to understand.
 
+**Stefan Tilkov** 00:10:56 Oh, that's interesting.
 
-Is that what it's about?
-Yeah, exactly.
-So it could be a delay because delays and drops are sort of instinctionable from one
-another on a sort of time scale.
-If I'm allowed to arbitrarily delay a message I can always out wait you as a software system
-because at some point you're going to say, well, all right, I give up it's not going
-to happen.
-So you can get garbage collection pauses.
+**Kyle Kingsbury** 00:10:57 Yeah, all it means is that the system should be resilient or should continue to function in the event that messages are not delivered.
 
+**Stefan Tilkov** 00:10:07 Okay.
 
-For example, when a run time stops execution of the program to clean up some memory, no
-messages will flow in or out.
-So that introduces a delay and that can look like a node partition.
-The operating system, you know, if a disk scheduler goes south a lot of times that will
-stall IO operations.
-And so if you're stuck waiting for the kernel to do some IO, your program might not be running
-anymore.
-And so you again have this sort of delay.
-Network partitions can happen from the actual network.
-You know, if you have a cable that gets killed by a backhoe or unplugged, you'll get into
-logical software errors where a race condition occurs and some messages never get sent.
-There's all sorts of different ways this can happen.
-Okay.
+**Kyle Kingsbury** 00:10:58 And we see this happen in production network all the time. Microsoft ran a really interesting paper in sitcom a couple of years ago where they measured their database packet loss over several years. They have a lot of machines and a lot of routers. They actually gave pretty good quantitative evidence about the frequency and severity partitions. It turns out to be far more common than you would expect even with good change control even with good hardware.
 
+**Stefan Tilkov** 00:11:29 Okay. So a partition can occur for any number of reasons. It doesn't matter whether it's actually the network being down or some other problem along the way. It's for some reason the message doesn't arrive at the node it was supposed to arrive at. Is that what it's about?
 
-So if I, if as you said, I can pick any two from those from those three properties.
-Any walk us through the three options?
-Do they all actually exist?
-And what, what kind of, you know, what's the, what's the result?
-If I have a CAA, CP or an AP system.
-So there's, there's been some debate about what two out of three really means.
-Well, the paper is very explicit.
-It says, if you ever have a prediction, you must use either AP or CP.
-And experimentally, it looks like networks do experience partitions on a relatively frequent
-time scale.
-Given the regions are going to happen, I think we should make AP or CP tradeoffs.
-Okay.
-So there is no CA because there is no system that doesn't, that doesn't run into partitions
-anytime.
-There are maybe systems that are not run into predictions anytime.
-If you have a synchronous network and you're very diligent about maintaining it, you're
-okay.
-However, any system which is CP can also be totally available if an algorithm is in
-a way that you can do a lot of things.
-So you might as well shoot for AP or CP and simply in the common case when the network
-is working, do everything correctly.
-Okay.
-So you can have both as long as the network is running and then you degrade to one of the
-other.
-It's sort of like asking, if something bad happens to your network, which are you going
-to preserve?
-Okay.
-So, so let's, let's talk about those two AP and CP.
-What, what is the, what kinds of tradeoff am I making if I choose one of those two?
-So AP databases offer you availability first and foremost.
-And that means total availability that you can make a request to any node.
-You can make a write, you can make a read, you can make an update, a complicated query,
-a comparison, whatever you want to do against any node is fine.
-This makes them really good candidates for highly available systems in a single data
-center.
-But it also makes them good candidates for distributed systems that are geographically
-replicated because you can write independently in any given data center and with low latency
-immediately return a result.
+**Kyle Kingsbury** 00:11:44 Yeah, exactly. So it could be a delay because delays and drops are sort of instinctionable from one another on a sort of time scale. If I'm allowed to arbitrarily delay a message I can always out wait you as a software system because at some point you're going to say, well, all right, I give up it's not going to happen. So you can get garbage collection pauses. For example, when a run time stops execution of the program to clean up some memory, no messages will flow in or out. So that introduces a delay and that can look like a node partition. The operating system, you know, if a disk scheduler goes south a lot of times that will stall IO operations. And so if you're stuck waiting for the kernel to do some IO, your program might not be running anymore. And so you again have this sort of delay. Network partitions can happen from the actual network. You know, if you have a cable that gets killed by a backhoe or unplugged, you'll get into logical software errors where a race condition occurs and some messages never get sent. There's all sorts of different ways this can happen.
 
+**Stefan Tilkov** 00:12:43 Okay. So if I, if as you said, I can pick any two from those from those three properties. Any walk us through the three options? Do they all actually exist? And what, what kind of, you know, what's the, what's the result? If I have a CA, CP or an AP system.
 
-So that's one of the property, right?
-Everybody wants that.
-For people who, who, who consider that does an AP system give up consistency completely?
+**Kyle Kingsbury** 00:13:00 So there's, there's been some debate about what two out of three really means. Well, the paper is very explicit. It says, if you ever have a prediction, you must use either AP or CP. And experimentally, it looks like networks do experience partitions on a relatively frequent time scale. Given the regions are going to happen, I think we should make AP or CP tradeoffs. Okay. So there is no CA because there is no system that doesn't, that doesn't run into partitions anytime. There are maybe systems that are not run into predictions anytime. If you have a synchronous network and you're very diligent about maintaining it, you're okay. However, any system which is CP can also be totally available if an algorithm is in a way that you can do a lot of things. So you might as well shoot for AP or CP and simply in the common case when the network is working, do everything correctly.
+
+**Stefan Tilkov** 00:13:54 Okay. 
+
+**Kyle Kingsbury** 00:13:55 So you can have both as long as the network is running and then you degrade to one of the other. It's sort of like asking, if something bad happens to your network, which are you going to preserve?
+
+**Stefan Tilkov** 00:14:04 Okay. So, so let's, let's talk about those two AP and CP. What, what is the, what kinds of tradeoff am I making if I choose one of those two?
+
+**Kyle Kingsbury** 00:14:12 So AP databases offer you availability first and foremost. And that means total availability that you can make a request to any node. You can make a write, you can make a read, you can make an update, a complicated query, a comparison, whatever you want to do against any node is fine. This makes them really good candidates for highly available systems in a single data center. But it also makes them good candidates for distributed systems that are geographically replicated because you can write independently in any given data center and with low latency immediately return a result. So that's one of the property, right? Everybody wants that.
+
+**Stefan Tilkov** 00:14:49 For people who, who, who consider that does an AP system give up consistency completely?
 Or what is, what does it actually mean to have an AP system?
 So A in the sense of the cap theorem is total availability.
 And there's a whole bunch of different proofs to tell you what the sort of maximal consistency

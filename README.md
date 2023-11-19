@@ -12,3 +12,6 @@
 
 - Episode 179: Cassandra with Jonathan Ellis <br />
 [https://www.se-radio.net/2011/10/episode-179-cassandra-with-jonathan-ellis/](./seradio-episode179-cassandra.md)
+
+- Episode 354: Avi Kivity on ScyllaDB <br />
+[https://www.se-radio.net/2019/02/se-radio-episode-354-avi-kivity-on-scylladb/](./seradio-episode354-Avi-Kivity-on-ScyllaDB.md)
